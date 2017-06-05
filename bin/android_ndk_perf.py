@@ -428,15 +428,17 @@ class Adb(object):
       returncode = 0
     else:
       returncode = 1
-      # Regardless of the destination stream on the Android device ADB
-      # redirects everything to the standard error stream so this looks at the
-      # last line of the stream to get the command status code.
-      if out_lines:
-        try:
-          returncode = int(out_lines[-1])
-          out_lines = out_lines[:-1]
-        except ValueError:
-          pass
+
+      try:
+        returncode = int(err.splitlines()[-1])
+      except ValueError:
+        # legacy behavior: check last line of stdout (ADB used to merge STDOUT and STDERR)
+        if out_lines:
+          try:
+            returncode = int(out_lines[-1])
+            out_lines = out_lines[:-1]
+          except ValueError:
+            pass
     if returncode and not kwargs.get('display_output'):
       print out
       print >> sys.stderr, err
